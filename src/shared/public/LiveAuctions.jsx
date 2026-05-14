@@ -2,7 +2,7 @@ import { AuctionCard } from "./AuctionCard";
 import { auctions } from "../../seed/data";
 export function LiveAuctions() {
   return (
-    <section className="max-w-7xl mx-auto px-6 py-14">
+    <section className="max-w-7xl mx-auto px-6 py-14 " >
 
       {/* HEADER */}
       <div className="flex items-center justify-between mb-7">

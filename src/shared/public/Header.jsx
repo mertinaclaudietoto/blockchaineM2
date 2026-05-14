@@ -1,4 +1,27 @@
+import { useEffect, useState } from "react";
+
 export function Header() {
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === "undefined") return "light";
+    return localStorage.getItem("theme") || "light";
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
   return (
     <nav
       className="sticky top-0 z-50 border-b"
@@ -26,10 +49,9 @@ export function Header() {
 
         {/* Menu */}
         <div className="hidden lg:flex items-center gap-6">
-
           <a
             href="#"
-            className="nav-link font-medium"
+            className="font-medium"
             style={{ color: "var(--color-text-primary)" }}
           >
             Home
@@ -38,16 +60,25 @@ export function Header() {
           {["Explore", "Activity", "Community", "Pages", "Contact"].map((item) => (
             <div key={item} className="relative group">
               <button
-                className="nav-link flex items-center gap-1 font-medium"
+                className="flex items-center gap-1 font-medium"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 {item}
-                <svg className="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                <svg
+                  className="w-3 h-3 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
 
-              {/* dropdown (simple style) */}
               <div
                 className="absolute top-8 left-0 hidden group-hover:block p-2 rounded-md shadow-lg"
                 style={{
@@ -55,10 +86,16 @@ export function Header() {
                   border: "1px solid var(--color-border)",
                 }}
               >
-                <div className="px-3 py-2 text-sm cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                <div
+                  className="px-3 py-2 text-sm cursor-pointer"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   Item 1
                 </div>
-                <div className="px-3 py-2 text-sm cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                <div
+                  className="px-3 py-2 text-sm cursor-pointer"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   Item 2
                 </div>
               </div>
@@ -70,12 +107,21 @@ export function Header() {
         <div className="flex items-center gap-3">
 
           <button
-            className="transition-colors"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            🔍
+          </button>
+
+          {/* THEME TOGGLE */}
+          <button
+            onClick={toggleTheme}
+            className="px-3 py-2 rounded-md border"
+            style={{
+              borderColor: "var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
           </button>
 
           <button
@@ -90,7 +136,6 @@ export function Header() {
           </button>
 
         </div>
-
       </div>
     </nav>
   );

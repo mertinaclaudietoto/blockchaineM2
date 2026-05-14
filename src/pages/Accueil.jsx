@@ -8,7 +8,7 @@ import { TodaysPicks } from "../shared/public/TodaysPicks"
 import { TopSeller } from "../shared/public/TopSeller"
 export function Accueil(){
     return (
-        <>
+        <div style={{ backgroundColor: "var(--color-background)" }}>
             <Header></Header>
             <Hero></Hero>
             <LiveAuctions></LiveAuctions>
@@ -17,7 +17,7 @@ export function Accueil(){
             <PopularCollection></PopularCollection>
             <CreateAndSell></CreateAndSell>
             <Footer></Footer>
-        </>
+        </div>
     )
 }
 
