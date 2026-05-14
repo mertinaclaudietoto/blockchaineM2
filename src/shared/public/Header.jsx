@@ -1,26 +1,8 @@
-import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useSiteTheme } from "../../hooks/useSiteTheme";
 
 export function Header() {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === "undefined") return "light";
-    return localStorage.getItem("theme") || "light";
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
+  const { theme, toggleTheme } = useSiteTheme();
 
   return (
     <nav
@@ -34,7 +16,7 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
 
         {/* Logo */}
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 no-underline">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">
             🔥
           </div>
@@ -45,17 +27,24 @@ export function Header() {
           >
             Axies
           </span>
-        </div>
+        </Link>
 
         {/* Menu */}
         <div className="hidden lg:flex items-center gap-6">
-          <a
-            href="#"
-            className="font-medium"
+          <Link
+            to="/"
+            className="font-medium no-underline"
             style={{ color: "var(--color-text-primary)" }}
           >
             Home
-          </a>
+          </Link>
+          <Link
+            to="/nft"
+            className="font-medium no-underline"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            Marketplace NFT
+          </Link>
 
           {["Explore", "Activity", "Community", "Pages", "Contact"].map((item) => (
             <div key={item} className="relative group">
