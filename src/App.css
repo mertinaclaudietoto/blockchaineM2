@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+#__next-dev-overlay {
+  display: none !important;
+}
+#__next-logo {
+  display: none !important;
+}
+
+ @theme {
+  --font-title: "Space Grotesk", sans-serif;
+  --font-body: "Urbanist", sans-serif;
+  /* BASE */
+  --color-background: #FCFCFD; /* gray-1 */
+  --color-foreground: #1E1F24; /* gray-12 */
+
+  /* SURFACES */
+  --color-surface: #F9F9FB; /* gray-2 */
+  --color-border: #E0E1E6; /* gray-5 */
+
+  /* TEXT */
+  --color-text-primary: #1E1F24;
+  --color-text-secondary: #62636C;
+
+  /* PRIMARY (bleu) */
+  --color-primary: #3D63DD; /* blue-9 */
+  --color-primary-hover: #3657C3; /* blue-10 */
+  --color-primary-soft: #EDF2FE; /* blue-3 */
+
+  /* STATES */
+  --color-success: #2ECC71;
+  --color-danger: #E5484D;
+}
+.dark {
+  /* BASE */
+  --color-background: #111113; /* gray-1 */
+  --color-foreground: #EEEEF0; /* gray-12 */
+
+  /* SURFACES */
+  --color-surface: #19191B; /* gray-2 */
+  --color-border: #303136; /* gray-5 */
+
+  /* TEXT */
+  --color-text-primary: #EEEEF0;
+  --color-text-secondary: #B2B3BD;
+
+  /* PRIMARY */
+  --color-primary: #3D63DD; /* blue-9 */
+  --color-primary-hover: #405EB2; /* blue-8 */
+  --color-primary-soft: #172448; /* blue-3 */
+
+  /* STATES */
+  --color-success: #2ECC71;
+  --color-danger: #FF6369;
+}
+
+body {   font-family: "Urbanist", sans-serif;background-color: var(--color-blue-1); font-family: 'DM Sans', sans-serif; }
+.nav-link { position: relative; }
+.nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 1px; background: #3D63DD; transition: width 0.3s; }
+.nav-link:hover::after { width: 100%; }
+.portfolio-card:hover img { transform: scale(1.05); }
+.service-card:hover { border-color: #3D63DD; transform: translateY(-4px); }
+.social-btn { transition: all 0.2s; }
+.social-btn:hover { background: #3D63DD; color: #fff; }
+.tab-active { border-bottom: 2px solid #3D63DD; color: #3D63DD; }
+
