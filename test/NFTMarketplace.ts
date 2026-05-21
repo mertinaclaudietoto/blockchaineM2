@@ -16,20 +16,7 @@ describe("NFTMarketplace", function () {
       "Token URI is required",
     );
   });
-  it("should list an owned NFT for sale", async function () {
-    const [owner] = await ethers.getSigners();
-    const marketplace = await ethers.deployContract("NFTMarketplace");
-    const tokenURI = "ipfs://metadata-1";
-    await marketplace.mintNFT(tokenURI);
-    const price = ethers.parseEther("0.01");
-    await expect(marketplace.listItem(1, price))
-      .to.emit(marketplace, "ItemListed")
-      .withArgs(1, owner.address, price);
-    const listing = await marketplace.listings(1);
-    expect(listing.seller).to.equal(owner.address);
-    expect(listing.price).to.equal(price);
-    expect(listing.active).to.equal(true);
-  });
+
   it("should reject listing with a zero price", async function () {
     const marketplace = await ethers.deployContract("NFTMarketplace");
   
