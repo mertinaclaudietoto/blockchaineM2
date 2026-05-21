@@ -1,4 +1,9 @@
+import { Link } from "react-router-dom";
+import { useSiteTheme } from "../../hooks/useSiteTheme";
+
 export function Header() {
+  const { theme, toggleTheme } = useSiteTheme();
+
   return (
     <nav
       className="sticky top-0 z-50 border-b"
@@ -11,7 +16,7 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
 
         {/* Logo */}
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 no-underline">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">
             🔥
           </div>
@@ -22,32 +27,47 @@ export function Header() {
           >
             Axies
           </span>
-        </div>
+        </Link>
 
         {/* Menu */}
         <div className="hidden lg:flex items-center gap-6">
-
-          <a
-            href="#"
-            className="nav-link font-medium"
+          <Link
+            to="/"
+            className="font-medium no-underline"
             style={{ color: "var(--color-text-primary)" }}
           >
             Home
-          </a>
+          </Link>
+          <Link
+            to="/nft"
+            className="font-medium no-underline"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            Marketplace NFT
+          </Link>
 
           {["Explore", "Activity", "Community", "Pages", "Contact"].map((item) => (
             <div key={item} className="relative group">
               <button
-                className="nav-link flex items-center gap-1 font-medium"
+                className="flex items-center gap-1 font-medium"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 {item}
-                <svg className="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                <svg
+                  className="w-3 h-3 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
 
-              {/* dropdown (simple style) */}
               <div
                 className="absolute top-8 left-0 hidden group-hover:block p-2 rounded-md shadow-lg"
                 style={{
@@ -55,10 +75,16 @@ export function Header() {
                   border: "1px solid var(--color-border)",
                 }}
               >
-                <div className="px-3 py-2 text-sm cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                <div
+                  className="px-3 py-2 text-sm cursor-pointer"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   Item 1
                 </div>
-                <div className="px-3 py-2 text-sm cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                <div
+                  className="px-3 py-2 text-sm cursor-pointer"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   Item 2
                 </div>
               </div>
@@ -70,12 +96,21 @@ export function Header() {
         <div className="flex items-center gap-3">
 
           <button
-            className="transition-colors"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            🔍
+          </button>
+
+          {/* THEME TOGGLE */}
+          <button
+            onClick={toggleTheme}
+            className="px-3 py-2 rounded-md border"
+            style={{
+              borderColor: "var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
           </button>
 
           <button
@@ -90,7 +125,6 @@ export function Header() {
           </button>
 
         </div>
-
       </div>
     </nav>
   );
