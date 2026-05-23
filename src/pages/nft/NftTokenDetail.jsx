@@ -7,12 +7,23 @@ import { DEMO_COLLECTION_NAME } from "../../seed/nftDemoData";
 export function NftTokenDetail() {
   const { tokenId: tokenIdParam } = useParams();
   const navigate = useNavigate();
-  const { getNft, DEMO_WALLET, DEMO_CONTRACT, listForSale, unlist, buy, showToast, marketStats } =
-    useNftMarketplace();
+  const {
+    getNft,
+    displayContract,
+    listForSale,
+    unlist,
+    buy,
+    showToast,
+    marketStats,
+    isOwner,
+    txPending,
+    useChain,
+  } = useNftMarketplace();
 
   const nft = getNft(tokenIdParam);
   const [listOpen, setListOpen] = useState(false);
   const [listPrice, setListPrice] = useState("");
+  const [buying, setBuying] = useState(false);
 
   if (!nft) {
     return (
@@ -24,7 +35,7 @@ export function NftTokenDetail() {
           <p className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
             Token introuvable
           </p>
-          <p>Ce tokenId n’existe pas dans la démo.</p>
+          <p>Ce tokenId n’existe pas dans la collection.</p>
         </div>
         <Link to="/nft/explorer" className="nft-mp-link">
           ← Retour au marché
@@ -33,23 +44,32 @@ export function NftTokenDetail() {
     );
   }
 
-  const isMine = nft.owner === DEMO_WALLET;
+  const isMine = isOwner(nft.owner);
 
-  const submitList = () => {
+  const submitList = async () => {
     const p = parseFloat(String(listPrice).replace(",", "."));
     if (Number.isNaN(p) || p <= 0) {
       showToast("Prix ETH invalide.");
       return;
     }
-    listForSale(nft.tokenId, p);
-    setListOpen(false);
-    setListPrice("");
+    const ok = await listForSale(nft.tokenId, p);
+    if (ok) {
+      setListOpen(false);
+      setListPrice("");
+    }
   };
 
-  const onBuy = () => {
-    const ok = buy(nft.tokenId);
-    if (ok) navigate("/nft/collection");
+  const onBuy = async () => {
+    setBuying(true);
+    try {
+      const ok = await buy(nft.tokenId);
+      if (ok) navigate("/nft/collection");
+    } finally {
+      setBuying(false);
+    }
   };
+
+  const busy = buying || txPending;
 
   return (
     <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
@@ -83,7 +103,7 @@ export function NftTokenDetail() {
         <div className="space-y-4 lg:sticky lg:top-24">
           <div>
             <p className="text-[11px] font-mono mb-1" style={{ color: "var(--color-text-secondary)" }}>
-              {DEMO_CONTRACT}
+              {displayContract}
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "var(--color-text-primary)" }}>
               {nft.name}
@@ -119,14 +139,14 @@ export function NftTokenDetail() {
             <dl className="grid grid-cols-2 gap-3 text-xs">
               <div>
                 <dt style={{ color: "var(--color-text-secondary)" }}>Propriétaire</dt>
-                <dd className="font-mono mt-0.5 truncate" style={{ color: "var(--color-text-primary)" }}>
+                <dd className="font-mono mt-0.5 truncate" style={{ color: "var(--color-text-primary)" }} title={nft.owner}>
                   {nft.owner}
                   {isMine ? " (vous)" : ""}
                 </dd>
               </div>
               <div>
                 <dt style={{ color: "var(--color-text-secondary)" }}>Créateur</dt>
-                <dd className="font-mono mt-0.5 truncate" style={{ color: "var(--color-text-primary)" }}>
+                <dd className="font-mono mt-0.5 truncate" style={{ color: "var(--color-text-primary)" }} title={nft.creator}>
                   {nft.creator}
                 </dd>
               </div>
@@ -137,7 +157,8 @@ export function NftTokenDetail() {
                 <button
                   type="button"
                   onClick={() => setListOpen(true)}
-                  className="nft-mp-btn nft-mp-btn-primary w-full rounded-xl text-sm"
+                  disabled={busy}
+                  className="nft-mp-btn nft-mp-btn-primary w-full rounded-xl text-sm disabled:opacity-60"
                 >
                   Lister pour de l’ETH
                 </button>
@@ -146,7 +167,9 @@ export function NftTokenDetail() {
                 <button
                   type="button"
                   onClick={() => unlist(nft.tokenId)}
-                  className="nft-mp-btn nft-mp-btn-ghost w-full rounded-xl text-sm"
+                  disabled={busy || useChain}
+                  className="nft-mp-btn nft-mp-btn-ghost w-full rounded-xl text-sm disabled:opacity-60"
+                  title={useChain ? "Retrait non implémenté on-chain" : undefined}
                 >
                   Retirer du marché
                 </button>
@@ -155,9 +178,10 @@ export function NftTokenDetail() {
                 <button
                   type="button"
                   onClick={onBuy}
-                  className="nft-mp-btn nft-mp-btn-mint w-full rounded-xl text-sm"
+                  disabled={busy}
+                  className="nft-mp-btn nft-mp-btn-mint w-full rounded-xl text-sm disabled:opacity-60"
                 >
-                  Acheter pour {formatEth(nft.priceEth)}
+                  {busy ? "Transaction…" : `Acheter · ${formatEth(nft.priceEth)}`}
                 </button>
               )}
               {!nft.listed && !isMine && (
@@ -169,8 +193,9 @@ export function NftTokenDetail() {
           </div>
 
           <p className="text-[11px] leading-relaxed px-1" style={{ color: "var(--color-text-secondary)" }}>
-            Démo UI type OpenSea / Blur : en production, l’achat passerait par un contrat de marketplace
-            (ex. Seaport) ou des appels directs au ERC-721 avec vérification des paiements.
+            {useChain
+              ? "Achat via buyItem sur Sepolia : MetaMask enverra la valeur en ETH au contrat."
+              : "Mode démo : connectez MetaMask sur Sepolia et configurez VITE_NFT_MARKETPLACE_ADDRESS pour les transactions réelles."}
           </p>
         </div>
       </div>
@@ -208,7 +233,12 @@ export function NftTokenDetail() {
               >
                 Annuler
               </button>
-              <button type="button" onClick={submitList} className="nft-mp-btn nft-mp-btn-primary text-sm px-5">
+              <button
+                type="button"
+                onClick={submitList}
+                disabled={busy}
+                className="nft-mp-btn nft-mp-btn-primary text-sm px-5 disabled:opacity-60"
+              >
                 Publier
               </button>
             </div>

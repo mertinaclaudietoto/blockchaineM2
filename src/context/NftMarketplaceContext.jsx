@@ -2,32 +2,97 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { HAS_MARKETPLACE, MARKETPLACE_ADDRESS } from "../blockchain/addresses";
+import { formatTransactionError } from "../blockchain/errors";
+import {
+  buyItem as buyItemOnChain,
+  fetchMarketplaceNfts,
+  listItem as listItemOnChain,
+  mintNft,
+} from "../blockchain/marketplace";
+import { SEPOLIA_CHAIN_LABEL } from "../blockchain/config";
+import { shortenAddress } from "../blockchain/wallet";
 import {
   createInitialNfts,
-  DEMO_CHAIN,
-  DEMO_CONTRACT,
-  DEMO_WALLET,
+  DEMO_COLLECTION_NAME,
 } from "../seed/nftDemoData";
 import { formatEth } from "../utils/formatEth";
+import { useWallet } from "./WalletContext";
 
 const NftMarketplaceContext = createContext(null);
 
 export function NftMarketplaceProvider({ children }) {
+  const {
+    account,
+    connected,
+    isSepolia,
+    ethBalance: walletBalance,
+    refreshBalance,
+    ensureSepolia,
+  } = useWallet();
+
   const [nfts, setNfts] = useState(createInitialNfts);
-  const [ethBalance, setEthBalance] = useState(2.5);
+  const [demoEthBalance, setDemoEthBalance] = useState(2.5);
   const [toast, setToast] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [txPending, setTxPending] = useState(false);
   const nextIdRef = useRef(4);
   const toastTimeoutRef = useRef(null);
+
+  const useChain = HAS_MARKETPLACE && connected && isSepolia;
+  const walletAddress = useChain ? account : null;
+  const displayWallet = walletAddress
+    ? shortenAddress(walletAddress)
+    : "0x71C…9A2e";
+  const displayContract = HAS_MARKETPLACE
+    ? shortenAddress(MARKETPLACE_ADDRESS, 8, 6)
+    : "0x8f3a…e4B1";
+  const displayChain = (() => {
+    if (!HAS_MARKETPLACE) return "Contrat non configuré (.env)";
+    if (!connected) return "Wallet non connecté";
+    if (!isSepolia) return "Basculez sur Sepolia";
+    return SEPOLIA_CHAIN_LABEL;
+  })();
+  const ethBalance =
+    connected && isSepolia && walletBalance != null
+      ? walletBalance
+      : connected && isSepolia
+        ? 0
+        : demoEthBalance;
 
   const showToast = useCallback((msg) => {
     setToast(msg);
     if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
-    toastTimeoutRef.current = window.setTimeout(() => setToast(null), 2800);
+    toastTimeoutRef.current = window.setTimeout(() => setToast(null), 3200);
   }, []);
+
+  const refreshFromChain = useCallback(async () => {
+    if (!HAS_MARKETPLACE || !connected) return;
+    setIsSyncing(true);
+    try {
+      await ensureSepolia();
+      const list = await fetchMarketplaceNfts();
+      if (list.length > 0) {
+        setNfts(list);
+      }
+    } catch (err) {
+      showToast(formatTransactionError(err));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [connected, ensureSepolia, showToast]);
+
+  useEffect(() => {
+    if (useChain) {
+      refreshFromChain();
+      refreshBalance();
+    }
+  }, [useChain, refreshFromChain, refreshBalance]);
 
   const getNft = useCallback(
     (tokenId) => {
@@ -37,25 +102,67 @@ export function NftMarketplaceProvider({ children }) {
     [nfts]
   );
 
+  const runTx = useCallback(
+    async (fn, successMessage) => {
+      if (!HAS_MARKETPLACE) {
+        showToast("Déployez le contrat et définissez VITE_NFT_MARKETPLACE_ADDRESS.");
+        return false;
+      }
+      if (!connected) {
+        showToast("Connectez MetaMask pour continuer.");
+        return false;
+      }
+      setTxPending(true);
+      try {
+        await ensureSepolia();
+        await fn();
+        showToast(successMessage);
+        await refreshFromChain();
+        await refreshBalance();
+        return true;
+      } catch (err) {
+        showToast(formatTransactionError(err));
+        return false;
+      } finally {
+        setTxPending(false);
+      }
+    },
+    [connected, ensureSepolia, refreshFromChain, refreshBalance, showToast]
+  );
+
   const mint = useCallback(
-    ({ name, description, imageUrl }) => {
-      const tokenId = nextIdRef.current;
-      nextIdRef.current += 1;
-      const trimmedName = name.trim() || `Sans titre #${tokenId}`;
+    async ({ name, description, imageUrl }) => {
+      const trimmedName = name.trim() || "Sans titre";
       const trimmedDesc =
-        description.trim() || "NFT créé en simulation (hors chaîne).";
+        description.trim() || "NFT créé via le marketplace.";
       const img =
         imageUrl.trim() ||
-        `https://picsum.photos/seed/m${tokenId}/${480}/${480}`;
+        `https://picsum.photos/seed/m${Date.now()}/${480}/${480}`;
 
+      if (useChain) {
+        // URI courte (HTTPS) : évite un énorme calldata et les rejets MetaMask.
+        const tokenURI = img.startsWith("http") ? img : `https://picsum.photos/seed/${Date.now()}/480/480`;
+        let mintedId = null;
+        const ok = await runTx(async () => {
+          const result = await mintNft(tokenURI);
+          mintedId = result.tokenId;
+        }, "NFT minté sur Sepolia.");
+        if (!ok) return null;
+        if (mintedId != null) return mintedId;
+        const latest = await fetchMarketplaceNfts();
+        return latest[latest.length - 1]?.tokenId ?? null;
+      }
+
+      const tokenId = nextIdRef.current;
+      nextIdRef.current += 1;
       setNfts((prev) => [
         {
           tokenId,
           name: trimmedName,
           description: trimmedDesc,
           imageUrl: img,
-          creator: DEMO_WALLET,
-          owner: DEMO_WALLET,
+          creator: displayWallet,
+          owner: displayWallet,
           listed: false,
           priceEth: null,
         },
@@ -64,73 +171,107 @@ export function NftMarketplaceProvider({ children }) {
       showToast("Transaction mint simulée — token enregistré localement.");
       return tokenId;
     },
-    [showToast]
+    [useChain, runTx, displayWallet, showToast]
   );
 
   const listForSale = useCallback(
-    (tokenId, priceEth) => {
+    async (tokenId, priceEth) => {
+      if (useChain) {
+        return runTx(
+          () => listItemOnChain(tokenId, priceEth),
+          "NFT listé sur le marché."
+        );
+      }
       setNfts((prev) =>
         prev.map((n) =>
-          n.tokenId === tokenId && n.owner === DEMO_WALLET
+          n.tokenId === tokenId
             ? { ...n, listed: true, priceEth }
             : n
         )
       );
       showToast("Listing simulé : prix affiché sur le marché.");
+      return true;
     },
-    [showToast]
+    [useChain, runTx, showToast]
   );
 
   const unlist = useCallback(
     (tokenId) => {
+      if (useChain) {
+        showToast("Retrait on-chain : appelez listItem avec prix 0 ou ajoutez unwithdraw au contrat.");
+        return false;
+      }
       setNfts((prev) =>
         prev.map((n) =>
-          n.tokenId === tokenId && n.owner === DEMO_WALLET
+          n.tokenId === tokenId
             ? { ...n, listed: false, priceEth: null }
             : n
         )
       );
       showToast("NFT retiré de la vente (simulation).");
+      return true;
     },
-    [showToast]
+    [useChain, showToast]
   );
 
   const buy = useCallback(
-    (tokenId) => {
+    async (tokenId) => {
       const nft = nfts.find((n) => n.tokenId === tokenId);
       if (!nft?.listed) {
         showToast("Ce token n’est pas listé.");
         return false;
       }
-      if (nft.owner === DEMO_WALLET) {
-        showToast("Impossible d’acheter votre propre NFT.");
-        return false;
+
+      if (useChain) {
+        if (
+          walletAddress &&
+          nft.owner?.toLowerCase() === walletAddress.toLowerCase()
+        ) {
+          showToast("Impossible d’acheter votre propre NFT.");
+          return false;
+        }
+        return runTx(
+          () => buyItemOnChain(tokenId),
+          `Achat confirmé pour ${formatEth(nft.priceEth)}.`
+        );
       }
+
       const price = nft.priceEth;
-      if (ethBalance < price) {
+      if (demoEthBalance < price) {
         showToast("Solde ETH (démo) insuffisant.");
         return false;
       }
-      setEthBalance((b) => b - price);
+      setDemoEthBalance((b) => b - price);
       setNfts((prev) =>
         prev.map((n) =>
           n.tokenId === tokenId
-            ? { ...n, owner: DEMO_WALLET, listed: false, priceEth: null }
+            ? { ...n, owner: displayWallet, listed: false, priceEth: null }
             : n
         )
       );
       showToast(
-        `Achat simulé : ${formatEth(price)} vers le vendeur, NFT transféré vers votre wallet.`
+        `Achat simulé : ${formatEth(price)} — NFT transféré vers votre wallet.`
       );
       return true;
     },
-    [nfts, ethBalance, showToast]
+    [nfts, useChain, walletAddress, runTx, demoEthBalance, displayWallet, showToast]
+  );
+
+  const isOwner = useCallback(
+    (owner) => {
+      if (!owner) return false;
+      if (useChain && walletAddress) {
+        return owner.toLowerCase() === walletAddress.toLowerCase();
+      }
+      return owner === displayWallet || owner.includes("71C");
+    },
+    [useChain, walletAddress, displayWallet]
   );
 
   const listedNfts = useMemo(() => nfts.filter((n) => n.listed), [nfts]);
   const myNfts = useMemo(
-    () => nfts.filter((n) => n.owner === DEMO_WALLET),
-    [nfts]
+    () => nfts.filter((n) => isOwner(n.owner)),
+    [nfts, isOwner]
   );
 
   const marketStats = useMemo(() => {
@@ -152,15 +293,29 @@ export function NftMarketplaceProvider({ children }) {
       myNfts,
       marketStats,
       ethBalance,
-      DEMO_WALLET,
-      DEMO_CONTRACT,
-      DEMO_CHAIN,
+      walletAddress,
+      displayWallet,
+      displayContract,
+      displayChain,
+      contractAddress: HAS_MARKETPLACE ? MARKETPLACE_ADDRESS : null,
+      collectionName: DEMO_COLLECTION_NAME,
+      useChain,
+      isSyncing,
+      txPending,
       getNft,
       mint,
       listForSale,
       unlist,
       buy,
+      isOwner,
       showToast,
+      refreshFromChain,
+      /** @deprecated utiliser displayWallet */
+      DEMO_WALLET: displayWallet,
+      /** @deprecated utiliser displayContract */
+      DEMO_CONTRACT: displayContract,
+      /** @deprecated utiliser displayChain */
+      DEMO_CHAIN: displayChain,
     }),
     [
       nfts,
@@ -168,12 +323,21 @@ export function NftMarketplaceProvider({ children }) {
       myNfts,
       marketStats,
       ethBalance,
+      walletAddress,
+      displayWallet,
+      displayContract,
+      displayChain,
+      useChain,
+      isSyncing,
+      txPending,
       getNft,
       mint,
       listForSale,
       unlist,
       buy,
+      isOwner,
       showToast,
+      refreshFromChain,
     ]
   );
 
@@ -188,7 +352,8 @@ export function NftMarketplaceProvider({ children }) {
             backgroundColor: "var(--color-surface)",
             color: "var(--color-text-primary)",
             borderColor: "var(--color-border)",
-            boxShadow: "0 8px 32px color-mix(in srgb, var(--color-foreground) 12%, transparent)",
+            boxShadow:
+              "0 8px 32px color-mix(in srgb, var(--color-foreground) 12%, transparent)",
           }}
         >
           {toast}
@@ -198,7 +363,6 @@ export function NftMarketplaceProvider({ children }) {
   );
 }
 
-// Hook exporté à côté du provider (pattern classique React).
 // eslint-disable-next-line react-refresh/only-export-components
 export function useNftMarketplace() {
   const ctx = useContext(NftMarketplaceContext);

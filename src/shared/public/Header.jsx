@@ -113,8 +113,9 @@ export function Header() {
             {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
           </button>
 
-          <button
-            className="px-4 py-2 text-xs rounded-md border"
+          <Link
+            to="/login"
+            className="px-4 py-2 text-xs rounded-md border no-underline"
             style={{
               borderColor: "var(--color-border)",
               color: "var(--color-text-primary)",
@@ -122,7 +123,7 @@ export function Header() {
             }}
           >
             Wallet connect
-          </button>
+          </Link>
 
         </div>
       </div>

@@ -6,16 +6,18 @@ import { DEMO_COLLECTION_NAME } from "../../seed/nftDemoData";
 const field = "nft-mp-input w-full mt-1.5 px-3 py-2.5 text-sm rounded-xl";
 
 export function NftMint() {
-  const { mint, DEMO_CONTRACT } = useNftMarketplace();
+  const { mint, displayContract, useChain, txPending } = useNftMarketplace();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    const tokenId = mint({ name, description, imageUrl });
-    navigate(`/nft/token/${tokenId}`, { replace: true });
+    const tokenId = await mint({ name, description, imageUrl });
+    if (tokenId != null) {
+      navigate(`/nft/token/${tokenId}`, { replace: true });
+    }
   };
 
   return (
@@ -29,15 +31,15 @@ export function NftMint() {
             Mint ERC-721
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-            Flux proche d’OpenSea Studio : métadonnées, média, puis confirmation. Contrat démo{" "}
+            Flux proche d’OpenSea Studio : métadonnées, média, puis confirmation. Contrat{" "}
             <code className="text-xs px-1 rounded" style={{ background: "var(--color-surface-elevated)" }}>
-              {DEMO_CONTRACT}
-            </code>{" "}
-            — aucune transaction réelle.
+              {displayContract}
+            </code>
+            {useChain ? " — transaction Sepolia via mintNFT." : " — simulation locale."}
           </p>
           <ul className="text-sm space-y-2" style={{ color: "var(--color-text-secondary)" }}>
             <li>· TokenId auto-incrémenté</li>
-            <li>· Propriété assignée à votre wallet démo</li>
+            <li>· Propriété assignée à votre wallet</li>
             <li>· Visible dans {DEMO_COLLECTION_NAME}</li>
           </ul>
         </div>
@@ -69,8 +71,12 @@ export function NftMint() {
               className={field}
             />
           </label>
-          <button type="submit" className="nft-mp-btn nft-mp-btn-primary w-full rounded-xl text-sm py-3.5">
-            Confirmer le mint
+          <button
+            type="submit"
+            disabled={txPending}
+            className="nft-mp-btn nft-mp-btn-primary w-full rounded-xl text-sm py-3.5 disabled:opacity-60"
+          >
+            {txPending ? "Transaction en cours…" : "Confirmer le mint"}
           </button>
         </form>
       </div>

@@ -1,11 +1,35 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSiteTheme } from "../../hooks/useSiteTheme";
 import { useNftMarketplace } from "../../context/NftMarketplaceContext";
+import { useWallet } from "../../context/WalletContext";
 import { DEMO_COLLECTION_NAME } from "../../seed/nftDemoData";
 
 export function NftMarketplaceHeader() {
-  const { ethBalance, DEMO_WALLET, DEMO_CHAIN } = useNftMarketplace();
+  const {
+    ethBalance,
+    displayWallet,
+    displayChain,
+    useChain,
+    isSyncing,
+    txPending,
+  } = useNftMarketplace();
+  const { connected, connect, isConnecting, shortAccount } = useWallet();
   const { theme, toggleTheme } = useSiteTheme();
+  const navigate = useNavigate();
+
+  const walletLabel = connected ? shortAccount : displayWallet;
+
+  const onWalletClick = async () => {
+    if (connected) {
+      navigate("/login");
+      return;
+    }
+    try {
+      await connect();
+    } catch {
+      navigate("/login");
+    }
+  };
 
   return (
     <header
@@ -61,12 +85,17 @@ export function NftMarketplaceHeader() {
           <span
             className="hidden lg:inline text-[10px] uppercase tracking-[0.08em] px-2.5 py-1 rounded-lg font-bold nft-mp-header-chip"
             style={{
-              backgroundColor: "var(--color-surface-elevated)",
-              color: "var(--color-text-secondary)",
+              backgroundColor: useChain
+                ? "var(--color-blur-mint-soft)"
+                : "var(--color-surface-elevated)",
+              color: useChain ? "var(--color-blur-mint)" : "var(--color-text-secondary)",
               border: "1px solid var(--color-border)",
             }}
+            title={useChain ? "Connecté à Sepolia" : "Mode démo locale"}
           >
-            {DEMO_CHAIN}
+            {displayChain}
+            {isSyncing ? " · sync…" : ""}
+            {txPending ? " · tx…" : ""}
           </span>
           <div
             className="nft-mp-header-wallet flex items-center gap-2 px-2.5 py-1.5 rounded-xl border nft-mp-header-chip"
@@ -74,7 +103,7 @@ export function NftMarketplaceHeader() {
               borderColor: "var(--color-border)",
               backgroundColor: "var(--color-surface-elevated)",
             }}
-            title="Solde ETH (démo)"
+            title={connected ? "Solde Sepolia" : "Solde (démo ou connectez le wallet)"}
           >
             <span className="text-xs font-bold" style={{ color: "var(--color-blur-mint)" }}>
               Ξ
@@ -98,15 +127,17 @@ export function NftMarketplaceHeader() {
           </button>
           <button
             type="button"
-            className="text-[11px] sm:text-xs font-semibold font-mono px-2.5 sm:px-3 py-2 rounded-xl border max-w-[100px] sm:max-w-[128px] truncate nft-mp-header-chip"
+            onClick={onWalletClick}
+            disabled={isConnecting}
+            className="text-[11px] sm:text-xs font-semibold font-mono px-2.5 sm:px-3 py-2 rounded-xl border max-w-[100px] sm:max-w-[140px] truncate nft-mp-header-chip disabled:opacity-60"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: connected ? "var(--color-blur-mint-border)" : "var(--color-border)",
               color: "var(--color-text-primary)",
               backgroundColor: "var(--color-surface)",
             }}
-            title={DEMO_WALLET}
+            title={connected ? "Gérer la connexion" : "Connecter MetaMask"}
           >
-            {DEMO_WALLET}
+            {isConnecting ? "…" : connected ? walletLabel : "Connect"}
           </button>
         </div>
       </div>
