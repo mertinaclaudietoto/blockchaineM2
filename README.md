@@ -160,11 +160,9 @@ npm run dev
 
 ## Adresse du contrat Sepolia
 
-À compléter après déploiement :
-
 ```text
-Adresse contrat : 0x...
-Etherscan Sepolia : https://sepolia.etherscan.io/address/0x...
+Adresse contrat : 0x4a5a1497cEd5fC29e5B9Cd8fF4CFaafF44D3ab99
+Etherscan Sepolia : https://sepolia.etherscan.io/address/0x4a5a1497cEd5fC29e5B9Cd8fF4CFaafF44D3ab99
 ```
 
 ## Scénario de démonstration
@@ -197,7 +195,7 @@ dossier `screenshots/` :
 
 ```text
 Repository GitHub public : https://github.com/...
-Adresse Sepolia Etherscan : https://sepolia.etherscan.io/address/0x...
+Adresse Sepolia Etherscan : https://sepolia.etherscan.io/address/0x4a5a1497cEd5fC29e5B9Cd8fF4CFaafF44D3ab99
 Vidéo de démonstration : https://...
 Déploiement front public : https://...
 ```
