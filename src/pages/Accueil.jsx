@@ -10,13 +10,23 @@ export function Accueil(){
     return (
         <div style={{ backgroundColor: "var(--color-background)" }}>
             <Header></Header>
-            <Hero></Hero>
-            <LiveAuctions></LiveAuctions>
-            <TopSeller></TopSeller>
-            <TodaysPicks></TodaysPicks>
-            <PopularCollection></PopularCollection>
-            <CreateAndSell></CreateAndSell>
-            <Footer></Footer>
+            <div id="hero" className="scroll-mt-20">
+                <Hero></Hero>
+            </div>
+            <div id="utilisateurs" className="scroll-mt-20">
+                <TopSeller></TopSeller>
+            </div>
+            <div id="creation" className="scroll-mt-20">
+                <CreateAndSell></CreateAndSell>
+            </div>
+            {/* <LiveAuctions></LiveAuctions> */}
+           
+            <div id="ventes" className="scroll-mt-20">
+                <TodaysPicks></TodaysPicks>
+            </div>
+            {/* <PopularCollection></PopularCollection> */}
+            
+            {/* <Footer></Footer> */}
         </div>
     )
 }

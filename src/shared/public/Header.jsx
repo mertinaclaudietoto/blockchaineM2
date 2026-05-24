@@ -1,8 +1,18 @@
 import { Link } from "react-router-dom";
 import { useSiteTheme } from "../../hooks/useSiteTheme";
+import { useWallet } from "../../context/WalletContext";
+
+const menuLinks = [
+  { label: "Accueil", to: "/#hero" },
+  { label: "Utilisateurs", to: "/#utilisateurs" },
+  { label: "Créer & vendre", to: "/#creation" },
+  { label: "NFTs en vente", to: "/#ventes" },
+  { label: "Marketplace", to: "/nft" },
+];
 
 export function Header() {
   const { theme, toggleTheme } = useSiteTheme();
+  const { connected, shortAccount } = useWallet();
 
   return (
     <nav
@@ -31,75 +41,20 @@ export function Header() {
 
         {/* Menu */}
         <div className="hidden lg:flex items-center gap-6">
-          <Link
-            to="/"
-            className="font-medium no-underline"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Home
-          </Link>
-          <Link
-            to="/nft"
-            className="font-medium no-underline"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Marketplace NFT
-          </Link>
-
-          {["Explore", "Activity", "Community", "Pages", "Contact"].map((item) => (
-            <div key={item} className="relative group">
-              <button
-                className="flex items-center gap-1 font-medium"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                {item}
-                <svg
-                  className="w-3 h-3 mt-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2.5"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-
-              <div
-                className="absolute top-8 left-0 hidden group-hover:block p-2 rounded-md shadow-lg"
-                style={{
-                  backgroundColor: "var(--color-surface)",
-                  border: "1px solid var(--color-border)",
-                }}
-              >
-                <div
-                  className="px-3 py-2 text-sm cursor-pointer"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  Item 1
-                </div>
-                <div
-                  className="px-3 py-2 text-sm cursor-pointer"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  Item 2
-                </div>
-              </div>
-            </div>
+          {menuLinks.map((item) => (
+            <Link
+              key={item.label}
+              to={item.to}
+              className="font-medium no-underline"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              {item.label}
+            </Link>
           ))}
         </div>
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-
-          <button
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            🔍
-          </button>
 
           {/* THEME TOGGLE */}
           <button
@@ -122,7 +77,7 @@ export function Header() {
               backgroundColor: "transparent",
             }}
           >
-            Wallet connect
+            {connected ? shortAccount : "Wallet connect"}
           </Link>
 
         </div>

@@ -1,20 +1,40 @@
-export function PickCard({ title, emoji, bg, owner, eth, heart, badge }) {
+import { Link } from "react-router-dom";
+
+export function PickCard({
+  title,
+  description,
+  emoji,
+  bg,
+  imageUrl,
+  creator,
+  seller,
+  eth,
+  badge,
+  tokenId,
+}) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface hover:-translate-y-1 transition">
 
       {/* IMAGE */}
       <div className="relative">
 
-        <div
-          className="w-full aspect-square flex items-center justify-center text-8xl"
-          style={{ background: bg }}
-        >
-          {emoji}
-        </div>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-full aspect-square object-cover"
+          />
+        ) : (
+          <div
+            className="w-full aspect-square flex items-center justify-center text-8xl"
+            style={{ background: bg }}
+          >
+            {emoji}
+          </div>
+        )}
 
-        {/* HEART */}
-        <span className="absolute top-3 right-3 text-xs px-2 py-1 rounded-full bg-surface/80">
-          ❤️ {heart}
+        <span className="absolute top-3 right-3 text-xs px-2 py-1 rounded-full bg-surface/80 text-[var(--color-text-primary)]">
+          #{tokenId}
         </span>
 
         {/* BADGE */}
@@ -36,43 +56,64 @@ export function PickCard({ title, emoji, bg, owner, eth, heart, badge }) {
           </p>
 
           <span className="text-xs px-2 py-1 rounded-md border border-border text-[var(--color-text-secondary)]">
-            BSC
+            ERC-721
           </span>
 
         </div>
 
-        <div className="flex items-center justify-between mb-3">
+        {description && (
+          <p className="text-xs mb-3 line-clamp-2 min-h-[2rem] text-[var(--color-text-secondary)]">
+            {description}
+          </p>
+        )}
 
-          {/* OWNER */}
-          <div className="flex items-center gap-2">
+        <div className="space-y-2 mb-3">
 
-            <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs bg-primary text-white">
-              🎨
-            </div>
-
-            <span className="text-xs text-[var(--color-text-secondary)]">
-              {owner}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] text-[var(--color-text-secondary)]">
+              Créateur
             </span>
-
+            <span className="text-[11px] font-mono truncate text-[var(--color-text-primary)]">
+              {creator}
+            </span>
           </div>
 
-          {/* PRICE */}
-          <p className="text-sm font-bold text-[var(--color-text-primary)]">
-            {eth}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] text-[var(--color-text-secondary)]">
+              Vendeur
+            </span>
+            <span className="text-[11px] font-mono truncate text-[var(--color-text-primary)]">
+              {seller}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <span className="text-[11px] text-[var(--color-text-secondary)]">
+              Prix
+            </span>
+            <p className="text-sm font-bold text-[var(--color-text-primary)]">
+              {eth}
+            </p>
+          </div>
 
         </div>
 
         {/* ACTIONS */}
         <div className="flex gap-2">
 
-          <button className="flex-1 py-2 text-xs rounded-md bg-primary text-white hover:bg-primary-hover transition">
-            🔨 Place Bid
-          </button>
+          <Link
+            to={`/nft/token/${tokenId}`}
+            className="flex-1 py-2 text-xs rounded-md bg-primary text-white hover:bg-primary-hover transition text-center no-underline"
+          >
+            Voir / Acheter
+          </Link>
 
-          <button className="flex-1 py-2 text-xs rounded-md border border-border hover:bg-surface transition text-[var(--color-text-primary)]">
-            ↺ History
-          </button>
+          <Link
+            to="/nft/explorer"
+            className="flex-1 py-2 text-xs rounded-md border border-border hover:bg-surface transition text-[var(--color-text-primary)] text-center no-underline"
+          >
+            Explorer
+          </Link>
 
         </div>
 

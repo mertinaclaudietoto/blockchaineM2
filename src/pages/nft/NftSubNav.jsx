@@ -9,7 +9,9 @@ export function NftSubNav() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
         <nav className="flex gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-0.5" aria-label="Navigation marketplace">
           {[
+            { to: "/", end: true, label: "Accueil" },
             { to: "/nft", end: true, label: "Découvrir" },
+
             { to: "/nft/explorer", end: false, label: "Explorer" },
             { to: "/nft/mint", end: false, label: "Mint" },
             { to: "/nft/collection", end: false, label: "Portfolio" },

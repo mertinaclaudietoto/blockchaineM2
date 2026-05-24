@@ -168,13 +168,6 @@ export const collections = [
       soft: "rgba(99,102,241,0.15)",
     },
     {
-      title: "Create Your Collection",
-      desc: "Setting up your NFT collection and creating NFTs on it is easy. The guide explains how to set up your first collection.",
-      emoji: "👥",
-      bg: "linear-gradient(135deg, #10b981, #059669)",
-      soft: "rgba(16,185,129,0.15)",
-    },
-    {
       title: "Add Your NFTs",
       desc: "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem.",
       emoji: "🖼️",

@@ -12,7 +12,11 @@ import { NftTokenDetail } from "../pages/nft/NftTokenDetail";
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Accueil />,
+    element: (
+      <NftMarketplaceProvider>
+        <Accueil />
+      </NftMarketplaceProvider>
+    ),
   },
   {
     path: "/login",

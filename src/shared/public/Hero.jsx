@@ -1,4 +1,18 @@
+import { Link } from "react-router-dom";
+import { useNftMarketplace } from "../../context/NftMarketplaceContext";
+import { formatEth } from "../../utils/formatEth";
+
 export function Hero() {
+  const { listedNfts, marketStats, salesStats, useChain, isSyncing } =
+    useNftMarketplace();
+  const featuredNft = listedNfts[0];
+  const stats = [
+    { label: "Ventes confirmées", value: String(salesStats.sales) },
+    { label: "Volume échangé", value: formatEth(salesStats.volumeEth) },
+    { label: "NFTs mintés", value: String(marketStats.items) },
+    { label: "Utilisateurs", value: String(marketStats.uniqueOwners) },
+  ];
+
   return (
     <section className="relative overflow-hidden min-h-[560px] flex items-center">
 
@@ -28,34 +42,64 @@ export function Hero() {
 
         {/* LEFT TEXT */}
         <div>
+          <p
+            className="text-xs font-bold uppercase tracking-[0.2em] mb-4"
+            style={{ color: "var(--color-primary)" }}
+          >
+            Marketplace NFT ERC-721 {useChain ? "connectée à Sepolia" : "en mode démo"}
+            {isSyncing ? " · synchronisation…" : ""}
+          </p>
           <h1
             className="text-5xl lg:text-6xl font-extrabold leading-tight mb-3"
             style={{ color: "var(--color-text-primary)" }}
           >
-            Discover, find,<br />
-            <span className="text-primary">Sell extraordinary</span><br />
-            Monster NFTs
+            Créez, listez,<br />
+            <span className="text-primary">vendez et achetez</span><br />
+            vos NFTs
           </h1>
 
           <p
-            className="text-sm mt-4 mb-8 max-w-sm leading-relaxed"
+            className="text-sm mt-4 mb-8 max-w-xl leading-relaxed"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            Marketplace For Monster Character Collections Non Fungible Token NFTs
+            Une marketplace décentralisée où chaque NFT est minté sur le smart contract,
+            listé en ETH, puis transféré automatiquement à l’acheteur après paiement.
           </p>
 
-          <div className="flex items-center gap-3">
-            <button
-              className="px-5 py-2 rounded-md font-medium transition bg-primary hover:bg-primary-hover text-white"
-            >
-              🔍 Explore
-            </button>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 max-w-2xl">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-xl border px-3 py-3"
+                style={{
+                  borderColor: "var(--color-border)",
+                  backgroundColor: "var(--color-surface)",
+                }}
+              >
+                <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                  {stat.value}
+                </p>
+                <p className="text-[11px] mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
 
-            <button
-              className="px-5 py-2 rounded-md border transition border-border text-text-primary hover:bg-surface"
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link
+              to="/nft/explorer"
+              className="px-5 py-2 rounded-md font-medium transition bg-primary hover:bg-primary-hover text-white no-underline"
             >
-              ✏️ Create
-            </button>
+              Explorer le marché
+            </Link>
+
+            <Link
+              to="/nft/mint"
+              className="px-5 py-2 rounded-md border transition border-border text-text-primary hover:bg-surface no-underline"
+            >
+              Créer un NFT
+            </Link>
           </div>
         </div>
 
@@ -80,7 +124,15 @@ export function Hero() {
                 border: "1px solid var(--color-border)",
               }}
             >
-              <div className="text-8xl">🐙</div>
+              {featuredNft?.imageUrl ? (
+                <img
+                  src={featuredNft.imageUrl}
+                  alt={featuredNft.name}
+                  className="w-full h-full object-cover rounded-3xl"
+                />
+              ) : (
+                <div className="text-8xl">🐙</div>
+              )}
 
               {/* BADGE */}
               <div
@@ -89,8 +141,24 @@ export function Hero() {
                   color: "var(--color-text-primary)",
                 }}
               >
-                31
+                {marketStats.listings}
               </div>
+
+              {featuredNft && (
+                <div
+                  className="absolute left-4 right-4 bottom-4 rounded-2xl p-3 border"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--color-surface) 88%, transparent)",
+                    borderColor: "var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  <p className="text-xs font-bold truncate">{featuredNft.name}</p>
+                  <p className="text-[11px] mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                    En vente · {formatEth(featuredNft.priceEth)}
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>

@@ -48,7 +48,8 @@ async function resolveTokenMetadata(tokenURI) {
   if (url.startsWith("data:application/json")) {
     try {
       const base64 = url.split(",")[1];
-      const json = JSON.parse(atob(base64));
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      const json = JSON.parse(new TextDecoder().decode(bytes));
       let image = json.image ?? "";
       if (typeof image === "string" && image.startsWith("ipfs://")) {
         image = `https://ipfs.io/ipfs/${image.slice(7)}`;
@@ -82,6 +83,14 @@ async function resolveTokenMetadata(tokenURI) {
   try {
     const res = await fetch(url);
     if (!res.ok) return fallback;
+    const contentType = res.headers.get("content-type") ?? "";
+    if (contentType.startsWith("image/")) {
+      return {
+        name: fallback.name,
+        description: "",
+        imageUrl: url,
+      };
+    }
     const json = await res.json();
     let image = json.image ?? json.image_url ?? "";
     if (typeof image === "string" && image.startsWith("ipfs://")) {
@@ -137,6 +146,26 @@ export async function fetchMarketplaceNfts(maxScan = MAX_TOKEN_SCAN) {
   }
 
   return nfts;
+}
+
+export async function fetchMarketplaceSalesStats() {
+  const contract = await getReadContract();
+  const events = await contract.queryFilter(contract.filters.ItemSold(), 0, "latest");
+  let volumeWei = 0n;
+  const buyers = new Set();
+  const sellers = new Set();
+
+  events.forEach((event) => {
+    volumeWei += event.args.price;
+    buyers.add(event.args.buyer.toLowerCase());
+    sellers.add(event.args.seller.toLowerCase());
+  });
+
+  return {
+    sales: events.length,
+    volumeEth: Number(formatEther(volumeWei)),
+    participants: new Set([...buyers, ...sellers]).size,
+  };
 }
 
 export async function buyItem(tokenId) {

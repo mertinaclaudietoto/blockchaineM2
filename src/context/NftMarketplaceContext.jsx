@@ -12,6 +12,7 @@ import { formatTransactionError } from "../blockchain/errors";
 import {
   buyItem as buyItemOnChain,
   fetchMarketplaceNfts,
+  fetchMarketplaceSalesStats,
   listItem as listItemOnChain,
   mintNft,
 } from "../blockchain/marketplace";
@@ -25,6 +26,16 @@ import { formatEth } from "../utils/formatEth";
 import { useWallet } from "./WalletContext";
 
 const NftMarketplaceContext = createContext(null);
+
+function toMetadataUri(metadata) {
+  const json = JSON.stringify(metadata);
+  const bytes = new TextEncoder().encode(json);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return `data:application/json;base64,${btoa(binary)}`;
+}
 
 export function NftMarketplaceProvider({ children }) {
   const {
@@ -41,6 +52,11 @@ export function NftMarketplaceProvider({ children }) {
   const [toast, setToast] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [txPending, setTxPending] = useState(false);
+  const [salesStats, setSalesStats] = useState({
+    sales: 0,
+    volumeEth: 0,
+    participants: 0,
+  });
   const nextIdRef = useRef(4);
   const toastTimeoutRef = useRef(null);
 
@@ -76,10 +92,18 @@ export function NftMarketplaceProvider({ children }) {
     setIsSyncing(true);
     try {
       await ensureSepolia();
-      const list = await fetchMarketplaceNfts();
+      const [list, chainSalesStats] = await Promise.all([
+        fetchMarketplaceNfts(),
+        fetchMarketplaceSalesStats().catch(() => ({
+          sales: 0,
+          volumeEth: 0,
+          participants: 0,
+        })),
+      ]);
       if (list.length > 0) {
         setNfts(list);
       }
+      setSalesStats(chainSalesStats);
     } catch (err) {
       showToast(formatTransactionError(err));
     } finally {
@@ -140,8 +164,11 @@ export function NftMarketplaceProvider({ children }) {
         `https://picsum.photos/seed/m${Date.now()}/${480}/${480}`;
 
       if (useChain) {
-        // URI courte (HTTPS) : évite un énorme calldata et les rejets MetaMask.
-        const tokenURI = img.startsWith("http") ? img : `https://picsum.photos/seed/${Date.now()}/480/480`;
+        const tokenURI = toMetadataUri({
+          name: trimmedName,
+          description: trimmedDesc,
+          image: img,
+        });
         let mintedId = null;
         const ok = await runTx(async () => {
           const result = await mintNft(tokenURI);
@@ -291,6 +318,7 @@ export function NftMarketplaceProvider({ children }) {
       nfts,
       listedNfts,
       myNfts,
+      salesStats,
       marketStats,
       ethBalance,
       walletAddress,
@@ -321,6 +349,7 @@ export function NftMarketplaceProvider({ children }) {
       nfts,
       listedNfts,
       myNfts,
+      salesStats,
       marketStats,
       ethBalance,
       walletAddress,
